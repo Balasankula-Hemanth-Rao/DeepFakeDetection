@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-12-15T10:36:56.162343",
+  "elapsed_seconds": 0.0,
+  "audit_config": {
+    "splits": [
+      "deepfake"
+    ],
+    "data_root": "sample_data"
+  },
+  "sample_statistics": {},
+  "total_samples": 0,
+  "risk_assessment": {
+    "level": "NONE",
+    "issues_found": 0,
+    "issue_breakdown": {
+      "identity_overlap": 0,
+      "video_hash_collision": 0,
+      "audio_hash_collision": 0,
+      "metadata_similarity": 0
+    }
+  },
+  "findings": {
+    "identity_overlap": {},
+    "video_hash_collisions": {},
+    "audio_hash_collisions": {},
+    "suspicious_metadata_clusters": {},
+    "errors": [
+      {
+        "type": "ValueError",
+        "message": "No samples found in sample_data"
+      }
+    ]
+  },
+  "recommendations": [
+    "No data leakage detected. Dataset appears clean."
+  ]
+}

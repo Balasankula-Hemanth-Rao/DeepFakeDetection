@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-12-15T10:37:20.736828",
+  "elapsed_seconds": 0.94,
+  "audit_config": {
+    "splits": [
+      "train",
+      "val"
+    ],
+    "data_root": "sample_data\\deepfake"
+  },
+  "sample_statistics": {
+    "train": 2,
+    "val": 1
+  },
+  "total_samples": 3,
+  "risk_assessment": {
+    "level": "NONE",
+    "issues_found": 0,
+    "issue_breakdown": {
+      "identity_overlap": 0,
+      "video_hash_collision": 0,
+      "audio_hash_collision": 0,
+      "metadata_similarity": 0
+    }
+  },
+  "findings": {
+    "identity_overlap": {},
+    "video_hash_collisions": {},
+    "audio_hash_collisions": {},
+    "suspicious_metadata_clusters": {},
+    "errors": [
+      {
+        "type": "AttributeError",
+        "message": "'NoneType' object has no attribute 'get'"
+      }
+    ]
+  },
+  "recommendations": [
+    "No data leakage detected. Dataset appears clean."
+  ]
+}

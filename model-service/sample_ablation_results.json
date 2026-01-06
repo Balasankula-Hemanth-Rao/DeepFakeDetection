@@ -1,0 +1,247 @@
+{
+  "metadata": {
+    "timestamp": "2024-01-15T10:30:45.123456",
+    "model_checkpoint": "checkpoints/final.pth",
+    "dataset_root": "data/deepfake",
+    "splits_evaluated": [
+      "train",
+      "val",
+      "test"
+    ],
+    "total_samples_evaluated": 3487,
+    "configurations_tested": 3,
+    "device": "cuda:0"
+  },
+  "configurations": {
+    "multimodal": {
+      "enabled_modalities": [
+        "video",
+        "audio"
+      ],
+      "fusion_strategy": "concat",
+      "description": "Full multimodal model using both video and audio streams with concatenation fusion"
+    },
+    "video-only": {
+      "enabled_modalities": [
+        "video"
+      ],
+      "fusion_strategy": "n/a",
+      "description": "Video-only model using only visual information from video frames"
+    },
+    "audio-only": {
+      "enabled_modalities": [
+        "audio"
+      ],
+      "fusion_strategy": "n/a",
+      "description": "Audio-only model using only audio spectrograms from speech"
+    }
+  },
+  "performance_comparison": {
+    "train": {
+      "multimodal": {
+        "auc": 0.9847,
+        "f1_score": 0.9562,
+        "accuracy": 0.9515,
+        "precision": 0.9614,
+        "recall": 0.9510,
+        "fpr_at_95_tpr": 0.0348,
+        "loss": 0.1243,
+        "samples": 1200
+      },
+      "video-only": {
+        "auc": 0.9612,
+        "f1_score": 0.9261,
+        "accuracy": 0.9195,
+        "precision": 0.9332,
+        "recall": 0.9191,
+        "fpr_at_95_tpr": 0.0562,
+        "loss": 0.1876,
+        "samples": 1200
+      },
+      "audio-only": {
+        "auc": 0.9423,
+        "f1_score": 0.8946,
+        "accuracy": 0.8862,
+        "precision": 0.9014,
+        "recall": 0.8879,
+        "fpr_at_95_tpr": 0.0823,
+        "loss": 0.2541,
+        "samples": 1200
+      }
+    },
+    "val": {
+      "multimodal": {
+        "auc": 0.9721,
+        "f1_score": 0.9384,
+        "accuracy": 0.9326,
+        "precision": 0.9441,
+        "recall": 0.9328,
+        "fpr_at_95_tpr": 0.0412,
+        "loss": 0.1687,
+        "samples": 843
+      },
+      "video-only": {
+        "auc": 0.9483,
+        "f1_score": 0.9056,
+        "accuracy": 0.8987,
+        "precision": 0.9142,
+        "recall": 0.8972,
+        "fpr_at_95_tpr": 0.0698,
+        "loss": 0.2134,
+        "samples": 843
+      },
+      "audio-only": {
+        "auc": 0.9214,
+        "f1_score": 0.8712,
+        "accuracy": 0.8621,
+        "precision": 0.8803,
+        "recall": 0.8641,
+        "fpr_at_95_tpr": 0.1024,
+        "loss": 0.2987,
+        "samples": 843
+      }
+    },
+    "test": {
+      "multimodal": {
+        "auc": 0.9638,
+        "f1_score": 0.9267,
+        "accuracy": 0.9204,
+        "precision": 0.9341,
+        "recall": 0.9195,
+        "fpr_at_95_tpr": 0.0461,
+        "loss": 0.1892,
+        "samples": 1444
+      },
+      "video-only": {
+        "auc": 0.9412,
+        "f1_score": 0.8971,
+        "accuracy": 0.8894,
+        "precision": 0.9062,
+        "recall": 0.8887,
+        "fpr_at_95_tpr": 0.0743,
+        "loss": 0.2341,
+        "samples": 1444
+      },
+      "audio-only": {
+        "auc": 0.9087,
+        "f1_score": 0.8543,
+        "accuracy": 0.8462,
+        "precision": 0.8641,
+        "recall": 0.8485,
+        "fpr_at_95_tpr": 0.1156,
+        "loss": 0.3214,
+        "samples": 1444
+      }
+    }
+  },
+  "modality_contribution": {
+    "summary": {
+      "dominant_modality": "video",
+      "video_contribution_percent": 62.4,
+      "audio_contribution_percent": 37.6,
+      "fusion_benefit_percent": 2.3,
+      "multimodal_over_video_percent": 2.4,
+      "multimodal_over_audio_percent": 5.9
+    },
+    "by_metric": {
+      "auc": {
+        "video_only_vs_audio_only": "Video outperforms audio by 5.21%",
+        "multimodal_vs_video_only": "Multimodal outperforms video-only by 2.39%",
+        "multimodal_vs_audio_only": "Multimodal outperforms audio-only by 6.02%",
+        "estimated_video_contribution": "61.8%",
+        "estimated_audio_contribution": "38.2%"
+      },
+      "f1": {
+        "video_only_vs_audio_only": "Video outperforms audio by 8.52%",
+        "multimodal_vs_video_only": "Multimodal outperforms video-only by 2.96%",
+        "multimodal_vs_audio_only": "Multimodal outperforms audio-only by 7.98%",
+        "estimated_video_contribution": "60.1%",
+        "estimated_audio_contribution": "39.9%"
+      },
+      "accuracy": {
+        "video_only_vs_audio_only": "Video outperforms audio by 8.96%",
+        "multimodal_vs_video_only": "Multimodal outperforms video-only by 3.49%",
+        "multimodal_vs_audio_only": "Multimodal outperforms audio-only by 8.78%",
+        "estimated_video_contribution": "59.8%",
+        "estimated_audio_contribution": "40.2%"
+      }
+    },
+    "analysis": {
+      "video_strength": "Strong visual artifacts in deepfakes - facial inconsistencies, eye movements, and temporal artifacts are well-captured by video encoder",
+      "audio_strength": "Speech synthesis artifacts provide complementary signal - helps detect unnatural prosody, pitch inconsistencies, and voice quality mismatches",
+      "fusion_effectiveness": "Moderate fusion benefit suggests some redundancy between modalities but complementary information exists in specific deepfake types",
+      "recommendations": [
+        "Video encoding can be the primary focus for resource-constrained deployments",
+        "Audio provides value-added detection especially for speech-focused deepfakes",
+        "Multimodal approach recommended for maximum accuracy and robustness",
+        "Consider separate video/audio quality assessment pipelines to prioritize stronger modality when one is compromised"
+      ]
+    }
+  },
+  "per_split_analysis": {
+    "train": {
+      "best_configuration": "multimodal",
+      "auc_difference_max_min": 0.0424,
+      "average_performance": {
+        "auc": 0.9627,
+        "f1_score": 0.9256,
+        "accuracy": 0.9191
+      }
+    },
+    "val": {
+      "best_configuration": "multimodal",
+      "auc_difference_max_min": 0.0507,
+      "average_performance": {
+        "auc": 0.9473,
+        "f1_score": 0.9051,
+        "accuracy": 0.8978
+      }
+    },
+    "test": {
+      "best_configuration": "multimodal",
+      "auc_difference_max_min": 0.0551,
+      "average_performance": {
+        "auc": 0.9379,
+        "f1_score": 0.8927,
+        "accuracy": 0.8853
+      }
+    }
+  },
+  "insights": {
+    "generalization": "All modality configurations show consistent ranking across train/val/test splits, indicating stable and generalizable performance differences",
+    "modality_balance": "Approximately 62:38 split favoring video over audio, suggesting visual artifacts are more reliable for deepfake detection than audio artifacts",
+    "redundancy": "2-3% fusion benefit indicates moderate complementarity - not strongly redundant but not highly synergistic either",
+    "robustness": "Video-only model maintains 97.2% of multimodal AUC on test set, suggesting it's a viable fallback for audio-unavailable scenarios",
+    "audio_reliability": "Audio-only achieves 94.3% of multimodal AUC, showing audio alone can provide reasonable detection but is less reliable than video",
+    "deployment_options": {
+      "high_accuracy": "Use multimodal model for 96.4% AUC on test set",
+      "mobile_friendly": "Use video-only for 94.1% AUC with 40% parameter reduction",
+      "audio_focused": "Use audio-only for 90.9% AUC when video unavailable (e.g., podcasts)",
+      "ensemble": "Consider weighted ensemble: 60% video-only + 40% audio-only ≈ 95.1% AUC with different failure modes"
+    }
+  },
+  "reproducibility": {
+    "model_params": {
+      "video_encoder": "EfficientNet-B2",
+      "audio_encoder": "CNN-1D (64->128->256 channels)",
+      "fusion_strategy": "Concatenation",
+      "classifier_hidden_dim": 256,
+      "dropout": 0.3,
+      "num_classes": 2
+    },
+    "training_params": {
+      "optimizer": "AdamW",
+      "learning_rate": 0.0001,
+      "weight_decay": 0.00001,
+      "batch_size": 16,
+      "epochs_trained": 30,
+      "early_stopping_patience": 5
+    },
+    "data_params": {
+      "video_fps": 30,
+      "audio_sr": 16000,
+      "video_frame_count": 16,
+      "audio_duration_seconds": 3.0
+    }
+  }
+}

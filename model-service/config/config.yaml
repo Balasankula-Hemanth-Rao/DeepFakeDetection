@@ -1,0 +1,193 @@
+# Model Service Configuration
+# This file defines all configuration for the AI detection model service.
+# Values can be overridden via environment variables (see src/config.py).
+
+model:
+  # Path to model checkpoint file (relative to model-service root)
+  checkpoint_path: "checkpoints/debug.pth"
+  
+  # Checkpoint directory for saving during training
+  checkpoint_dir: "checkpoints"
+  
+  # Image size for model input (pixels)
+  image_size: 224
+  
+  # Model type (e.g., "efficientnet_b3")
+  model_type: "efficientnet_b3"
+  
+  # Video backbone model from timm
+  video:
+    backbone: "efficientnet_b3"
+    pretrained: true
+    embed_dim: 1536
+  
+  # Audio processing
+  audio:
+    sample_rate: 16000
+    n_mels: 64
+    n_fft: 2048
+    hop_length: 512
+    audio_encoder: "small_cnn"  # small_cnn | wav2vec2 | hubert
+    embed_dim: 256
+  
+  # Modality ablation: enable/disable audio and video
+  enable_audio: true   # set to false for video-only ablation
+  enable_video: true   # set to false for audio-only ablation
+  
+  # Fusion strategy
+  fusion:
+    strategy: "concat"  # concat | attention | cross_modal
+    hidden_dim: 512
+    dropout: 0.3
+    modality_dropout_prob: 0.0  # Dropout probability per modality (0.0 = disabled)
+                                 # During training: randomly drop audio or video features
+                                 # During inference: no dropout (deterministic)
+    
+    # Auxiliary loss for temporal consistency (optional)
+    temporal_consistency_loss:
+      enabled: false  # Set to true to enable temporal consistency loss during training
+      weight: 0.1     # Weight of temporal loss relative to main classification loss
+                      # Recommended range: 0.01 - 0.5 (0.1 is a good starting point)
+
+server:
+  # Server host address
+  host: "0.0.0.0"
+  
+  # Server port
+  port: 8000
+  
+  # Maximum file upload size in MB
+  max_file_size_mb: 10
+  
+  # Number of workers for production (use 1 for development/debugging)
+  workers: 1
+  
+  # Reload on code changes (development only)
+  reload: false
+
+dataset:
+  # Dataset structure: directory or manifest
+  data_root: "data/deepfake"
+  
+  # CSV or JSON manifest with columns: [video_id, label, split, path]
+  manifest_path: "data/manifest.csv"
+  
+  # Data preprocessing
+  preprocessing:
+    mode: "on_the_fly"  # on_the_fly | preextracted
+    preprocessed_dir: "data/preprocessed"
+    
+  # Video parameters
+  video:
+    frame_rate: 30  # frames per second to sample
+    temporal_window: 16  # number of frames per clip
+    clip_sampling_strategy: "random"  # random | uniform | start_at
+    h: 224
+    w: 224
+    
+  # Face detection & alignment
+  face:
+    detect: true
+    detector: "retinaface"  # retinaface | mtcnn | none
+    crop_margin: 0.2
+    align: false
+    
+  # Audio parameters
+  audio:
+    enabled: true
+    extract_audio: true
+    segment_duration: 1.0  # seconds per audio clip
+    
+  # Augmentation
+  augmentation:
+    video:
+      random_crop: true
+      random_flip: true
+      color_jitter: true
+      jpeg_compression: false
+    audio:
+      add_noise: false
+      time_stretch: false
+      pitch_shift: false
+      
+  # Debug mode settings
+  debug_size: 4  # number of samples in debug mode
+  num_workers: 2
+
+training:
+  # Training hyperparameters
+  seed: 42
+  epochs: 30
+  batch_size: 16
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  warmup_epochs: 2
+  
+  # Optimizer & scheduler
+  optimizer: "adamw"
+  scheduler: "cosine"  # cosine | plateau
+  
+  # Loss & regularization
+  loss: "cross_entropy"
+  label_smoothing: 0.1
+  
+  # Training features
+  use_amp: false  # mixed precision
+  gradient_clip: 1.0
+  
+  # Checkpointing
+  checkpoint_interval: 1  # save every N epochs
+  early_stopping_patience: 5
+  
+  # Device
+  device: "auto"  # auto | cuda | cpu
+  num_workers: 2
+  pin_memory: true
+
+evaluation:
+  # Evaluation settings
+  aggregation: "mean"  # mean | max | attention
+  confidence_threshold: 0.5
+  
+  # Metrics to compute
+  compute_roc: true
+  compute_pr: true
+  compute_cm: true
+  
+  # Output paths
+  results_dir: "results"
+  save_csv: true
+  save_plots: true
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+  
+  # Output logs as JSON for structured logging
+  json: true
+  
+  # Log file path (relative to model-service root), empty string = stdout only
+  log_file: ""
+  
+  # Experiment tracking
+  track: false  # enable wandb/mlflow
+  tracker: "wandb"  # wandb | mlflow
+  project_name: "deepfake-detection"
+  experiment_name: "multimodal-baseline"
+
+security:
+  # API key for authentication (override in .env with MODEL_API_KEY)
+  api_key: "change-in-production"
+  
+  # Enable API key validation
+  require_api_key: true
+
+inference:
+  # Device: "auto" (use GPU if available), "cuda", or "cpu"
+  device: "auto"
+  
+  # Cache model in memory (recommended for production)
+  cache_model: true
+  
+  # Maximum number of concurrent inference requests (if using async)
+  max_concurrent: 4

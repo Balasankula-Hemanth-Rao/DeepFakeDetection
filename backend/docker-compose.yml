@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Aura Veracity Backend API
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=https://ppwatjhahicuwnvlpzqf.supabase.co
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwd2F0amhhaGljdXdudmxwenFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NzAxMzEsImV4cCI6MjA2OTQ0NjEzMX0.9TnpvZQGZwYuA-yiLxqi29XgqFmaehgqEh4udTTMnUo
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - SUPABASE_STORAGE_BUCKET=videos
+      - DEBUG=true
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ALLOW_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:8000
+    volumes:
+      - .:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - aura-network
+
+networks:
+  aura-network:
+    driver: bridge
+
+# To run:
+# docker-compose up -d
+#
+# To stop:
+# docker-compose down
+#
+# To view logs:
+# docker-compose logs -f backend
+#
+# To rebuild:
+# docker-compose build --no-cache

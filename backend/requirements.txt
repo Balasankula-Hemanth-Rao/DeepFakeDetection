@@ -1,0 +1,34 @@
+# Python dependencies for Aura Veracity backend
+# Install with: pip install -r requirements.txt
+
+# Core web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Supabase client and dependencies
+supabase==2.4.0
+python-multipart==0.0.6
+
+# Environment variables and configuration
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# JWT and authentication
+PyJWT==2.10.1
+cryptography==42.0.0
+
+# Utilities
+python-jose==3.3.0
+passlib==1.7.4
+
+# Development and testing (optional)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Production server (alternative to uvicorn, optional)
+gunicorn==21.2.0
+
+# Logging and monitoring (optional)
+python-json-logger==2.0.7

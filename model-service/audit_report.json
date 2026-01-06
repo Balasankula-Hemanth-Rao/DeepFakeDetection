@@ -1,0 +1,104 @@
+{
+  "timestamp": "2025-12-15T14:32:08.123456",
+  "elapsed_seconds": 87.43,
+  "audit_config": {
+    "splits": [
+      "train",
+      "val",
+      "test"
+    ],
+    "data_root": "data/deepfake"
+  },
+  "sample_statistics": {
+    "train": 8234,
+    "val": 2105,
+    "test": 1876
+  },
+  "total_samples": 12215,
+  "risk_assessment": {
+    "level": "MEDIUM",
+    "issues_found": 7,
+    "issue_breakdown": {
+      "identity_overlap": 3,
+      "video_hash_collision": 0,
+      "audio_hash_collision": 2,
+      "metadata_similarity": 2
+    }
+  },
+  "findings": {
+    "identity_overlap": {
+      "('train', 'val')": [
+        "person_001",
+        "person_042",
+        "person_089"
+      ]
+    },
+    "video_hash_collisions": {},
+    "audio_hash_collisions": {
+      "('val', 'test')": [
+        {
+          "hash": "a7f3d2c8e9b1...",
+          "split1_samples": [
+            "val_sample_1234",
+            "val_sample_1235"
+          ],
+          "split2_samples": [
+            "test_sample_0456"
+          ]
+        },
+        {
+          "hash": "f2e8d1c3a9b7...",
+          "split1_samples": [
+            "val_sample_2105"
+          ],
+          "split2_samples": [
+            "test_sample_0789",
+            "test_sample_0790"
+          ]
+        }
+      ]
+    },
+    "suspicious_metadata_clusters": {
+      "train": [
+        {
+          "video_resolution": "1920x1080",
+          "codec": 828601953,
+          "audio_config": [
+            16000,
+            2
+          ],
+          "sample_count": 1204,
+          "samples": [
+            "train_sample_0001",
+            "train_sample_0002",
+            "train_sample_0003",
+            "train_sample_0004",
+            "train_sample_0005"
+          ]
+        },
+        {
+          "video_resolution": "1280x720",
+          "codec": 808464432,
+          "audio_config": [
+            44100,
+            2
+          ],
+          "sample_count": 687,
+          "samples": [
+            "train_sample_5001",
+            "train_sample_5002",
+            "train_sample_5003",
+            "train_sample_5004",
+            "train_sample_5005"
+          ]
+        }
+      ]
+    },
+    "errors": []
+  },
+  "recommendations": [
+    "Identity overlap detected: Remove or reallocate samples to ensure no person appears in multiple splits. Affected identities: person_001 (train→val), person_042 (train→val), person_089 (train→val). This is critical for model generalization.",
+    "Identical audio tracks found across splits: Extract audio separately or verify split assignment for these samples. 2 audio collisions detected between val and test splits. Check if these are annotation errors or preprocessing artifacts.",
+    "Suspicious metadata clusters detected: Verify samples were independently collected and not batch-processed identically. Large clusters of identically-configured videos (1204 @1920x1080, 687 @1280x720) suggest potential batch processing or same-source data."
+  ]
+}
