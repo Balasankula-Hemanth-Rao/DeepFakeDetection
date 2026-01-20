@@ -197,6 +197,7 @@ class MultimodalModel(nn.Module):
             self.video_pretrained = True
             self.video_embed_dim = 1536
             self.temporal_strategy = 'avg_pool'
+            self.audio_encoder_type = 'simple'  # NEW: 'simple' or 'wav2vec2'
             self.audio_sample_rate = 16000
             self.audio_n_mels = 64
             self.audio_embed_dim = 256
@@ -245,6 +246,7 @@ class MultimodalModel(nn.Module):
                 else:
                     audio_cfg_dict = {}
                     
+                self.audio_encoder_type = audio_cfg_dict.get('encoder_type', 'simple')  # NEW
                 self.audio_sample_rate = audio_cfg_dict.get('sample_rate', 16000)
                 self.audio_n_mels = audio_cfg_dict.get('n_mels', 64)
                 self.audio_embed_dim = audio_cfg_dict.get('embed_dim', 256)
@@ -281,6 +283,7 @@ class MultimodalModel(nn.Module):
                 self.video_pretrained = True
                 self.video_embed_dim = 1536
                 self.temporal_strategy = 'avg_pool'
+                self.audio_encoder_type = 'simple'
                 self.audio_sample_rate = 16000
                 self.audio_n_mels = 64
                 self.audio_embed_dim = 256
@@ -351,20 +354,78 @@ class MultimodalModel(nn.Module):
     
     def _build_audio_encoder(self) -> nn.Module:
         """Build audio encoder."""
-        return AudioCNN(n_mels=self.audio_n_mels, embed_dim=self.audio_embed_dim)
+        if self.audio_encoder_type == 'wav2vec2':
+            # Use pre-trained Wav2Vec2 encoder
+            try:
+                from .audio_encoder import Wav2Vec2AudioEncoder
+                logger.info("Using Wav2Vec2 audio encoder")
+                return Wav2Vec2AudioEncoder(
+                    model_name="facebook/wav2vec2-base",
+                    embed_dim=self.audio_embed_dim,
+                    freeze_layers=8,
+                    sample_rate=self.audio_sample_rate,
+                )
+            except ImportError:
+                logger.warning("Wav2Vec2AudioEncoder not available, falling back to AudioCNN")
+                return AudioCNN(n_mels=self.audio_n_mels, embed_dim=self.audio_embed_dim)
+        else:
+            # Use simple CNN encoder
+            return AudioCNN(n_mels=self.audio_n_mels, embed_dim=self.audio_embed_dim)
     
     def _build_fusion_head(self) -> nn.Module:
         """Build fusion module."""
         if self.fusion_strategy == 'concat':
             return nn.Identity()  # No fusion module needed
         elif self.fusion_strategy == 'attention':
-            # Cross-attention fusion (simplified)
-            return nn.MultiheadAttention(
-                embed_dim=max(self.video_embed_dim, self.audio_embed_dim),
-                num_heads=4,
-                dropout=self.dropout,
-                batch_first=True,
-            )
+            # Use advanced cross-modal attention fusion
+            try:
+                from .fusion import CrossModalAttentionFusion
+                logger.info("Using CrossModalAttentionFusion")
+                return CrossModalAttentionFusion(
+                    video_dim=self.video_embed_dim,
+                    audio_dim=self.audio_embed_dim,
+                    output_dim=self.fusion_dim,
+                    num_heads=4,
+                    dropout=self.dropout,
+                )
+            except ImportError:
+                logger.warning("CrossModalAttentionFusion not available, using simple attention")
+                return nn.MultiheadAttention(
+                    embed_dim=max(self.video_embed_dim, self.audio_embed_dim),
+                    num_heads=4,
+                    dropout=self.dropout,
+                    batch_first=True,
+                )
+        elif self.fusion_strategy == 'gated':
+            # Use gated fusion
+            try:
+                from .fusion import GatedFusion
+                logger.info("Using GatedFusion")
+                return GatedFusion(
+                    video_dim=self.video_embed_dim,
+                    audio_dim=self.audio_embed_dim,
+                    output_dim=self.fusion_dim,
+                    dropout=self.dropout,
+                )
+            except ImportError:
+                logger.warning("GatedFusion not available, falling back to concat")
+                return nn.Identity()
+        elif self.fusion_strategy == 'transformer':
+            # Use transformer-based fusion
+            try:
+                from .fusion import BimodalTransformerFusion
+                logger.info("Using BimodalTransformerFusion")
+                return BimodalTransformerFusion(
+                    video_dim=self.video_embed_dim,
+                    audio_dim=self.audio_embed_dim,
+                    output_dim=self.fusion_dim,
+                    num_heads=4,
+                    num_layers=2,
+                    dropout=self.dropout,
+                )
+            except ImportError:
+                logger.warning("BimodalTransformerFusion not available, falling back to concat")
+                return nn.Identity()
         else:
             return nn.Identity()
     

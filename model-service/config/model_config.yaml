@@ -1,0 +1,114 @@
+# Model Service Configuration
+# Configuration for multimodal deepfake detection model
+
+model:
+  # Video configuration
+  video:
+    backbone: efficientnet_b3
+    pretrained: true
+    embed_dim: 1536
+    temporal_strategy: transformer  # Options: avg_pool, tconv, transformer
+  
+  # Audio configuration
+  audio:
+    encoder_type: wav2vec2  # Options: simple, wav2vec2
+    model_name: facebook/wav2vec2-base
+    sample_rate: 16000
+    n_mels: 64
+    embed_dim: 512
+    freeze_layers: 8  # For wav2vec2: freeze first N layers
+  
+  # Fusion configuration
+  fusion:
+    strategy: attention  # Options: concat, attention, gated, transformer
+    hidden_dim: 1024
+    num_heads: 4
+    dropout: 0.1
+    modality_dropout_prob: 0.2  # Dropout probability during training
+    
+    # Temporal consistency loss
+    temporal_consistency_loss:
+      enabled: true
+      weight: 0.1
+
+# Preprocessing configuration
+preprocessing:
+  # Frame extraction
+  fps: 3
+  frame_size: 224
+  temporal_window: 16
+  
+  # Audio preprocessing
+  use_vad: true  # Voice activity detection
+  vad_strategy: energy  # Options: energy, pyannote
+  
+  # Optical flow
+  use_optical_flow: false  # Enable for motion features
+  flow_method: farneback  # Options: farneback, lucas_kanade
+
+# Training configuration
+training:
+  batch_size: 8
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  epochs: 50
+  
+  # Optimizer
+  optimizer: adamw
+  
+  # Learning rate scheduler
+  scheduler: cosine
+  warmup_epochs: 5
+  
+  # Loss
+  label_smoothing: 0.1
+  
+  # Early stopping
+  early_stopping_patience: 5
+  
+  # Checkpointing
+  save_best_only: true
+  checkpoint_dir: checkpoints
+
+# Inference configuration
+inference:
+  # Aggregation strategy for video-level prediction
+  aggregation: mean  # Options: mean, max, attention
+  
+  # Saliency generation
+  generate_saliency: true
+  top_k_anomalous: 5
+  saliency_method: gradcam  # Options: gradcam, gradient, integrated_gradient
+  
+  # Ensemble
+  use_ensemble: false
+  ensemble_strategy: weighted  # Options: mean, weighted, voting
+  ensemble_weights: [0.4, 0.3, 0.3]
+
+# Data configuration
+data:
+  data_root: data/
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  
+  # Augmentation
+  augmentation:
+    enabled: true
+    horizontal_flip: 0.5
+    color_jitter: 0.2
+    rotation: 10
+
+# Logging configuration
+logging:
+  level: INFO
+  log_dir: logs/
+  tensorboard: true
+  wandb: false
+
+# Hardware configuration
+hardware:
+  device: cuda  # Options: cuda, cpu
+  num_workers: 4
+  pin_memory: true
+  mixed_precision: true

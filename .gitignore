@@ -23,3 +23,39 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Data files and datasets
+*.zip
+*.tar.gz
+*.rar
+*.7z
+model-service/data/
+model-service/extracted/
+model-service/extracted_data/
+
+# Training artifacts
+model-service/checkpoints/
+model-service/logs/
+*.pth
+*.pt
+*.ckpt
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS files
+Thumbs.db
+.DS_Store
