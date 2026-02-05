@@ -11,7 +11,7 @@ const Hero = () => {
   const { user, loading } = useAuth();
 
   // Memoize floating particles
-  const particles = useMemo(() => 
+  const particles = useMemo(() =>
     [...Array(8)].map((_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -19,7 +19,7 @@ const Hero = () => {
       duration: 3 + Math.random() * 2,
       delay: Math.random() * 2,
     })),
-  []);
+    []);
 
   const features = [
     {
@@ -43,15 +43,15 @@ const Hero = () => {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <img 
-          src={heroImage} 
-          alt="" 
+        <img
+          src={heroImage}
+          alt=""
           className="w-full h-full object-cover opacity-20"
-          loading="eager"
+          loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
       </div>
-      
+
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {particles.map((particle) => (
@@ -105,13 +105,13 @@ const Hero = () => {
           </h1>
 
           {/* Subheadline */}
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
           >
-            Aura Veracity uses multimodal AI to analyze videos for potential deepfake manipulation. 
+            Aura Veracity uses multimodal AI to analyze videos for potential deepfake manipulation.
             Upload a video and get detailed authenticity analysis.
           </motion.p>
         </motion.div>
@@ -126,30 +126,30 @@ const Hero = () => {
           {loading ? (
             <div className="w-48 h-14 bg-muted/50 rounded-lg animate-pulse" />
           ) : user ? (
-            <Button 
-              variant="hero" 
-              size="lg" 
-              className="text-lg px-8 py-6 min-w-[180px]" 
+            <Button
+              variant="hero"
+              size="lg"
+              className="text-lg px-8 py-6 min-w-[180px]"
               onClick={() => navigate('/dashboard')}
             >
-              <LayoutDashboard className="w-5 h-5 mr-2" />
-              Go to Dashboard
+              <Brain className="w-5 h-5 mr-2" />
+              Start Analysis
             </Button>
           ) : (
             <>
-              <Button 
-                variant="hero" 
-                size="lg" 
-                className="text-lg px-8 py-6 min-w-[180px]" 
+              <Button
+                variant="hero"
+                size="lg"
+                className="text-lg px-8 py-6 min-w-[180px]"
                 onClick={() => navigate('/auth?mode=signup')}
               >
                 <Brain className="w-5 h-5 mr-2" />
                 Get Started
               </Button>
-              <Button 
-                variant="glass" 
-                size="lg" 
-                className="text-lg px-8 py-6 min-w-[180px]" 
+              <Button
+                variant="glass"
+                size="lg"
+                className="text-lg px-8 py-6 min-w-[180px]"
                 onClick={() => navigate('/auth?mode=signin')}
               >
                 Sign In

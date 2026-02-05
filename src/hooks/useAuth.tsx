@@ -11,7 +11,6 @@ interface AuthContextType {
   signInWithPassword: (email: string, password: string) => Promise<{ error: any }>;
   signInWithOTP: (email: string, metadata?: any) => Promise<{ error: any }>;
   verifyOTP: (email: string, token: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   verifyOtp: (email: string, token: string, type: 'email' | 'sms') => Promise<{ error: any }>;
 }
@@ -36,13 +35,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Check for existing session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Set up auth state listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
-        
+
         if (event === 'SIGNED_IN') {
           toast({
             title: "Welcome!",
@@ -57,13 +62,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -77,7 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           data: metadata
         }
       });
-      
+
       if (error) {
         toast({
           variant: "destructive",
@@ -90,7 +88,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: "Please check your email to confirm your account.",
         });
       }
-      
+
       return { error };
     } catch (error: any) {
       toast({
@@ -108,7 +106,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email,
         password
       });
-      
+
       if (error) {
         toast({
           variant: "destructive",
@@ -116,7 +114,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: error.message,
         });
       }
-      
+
       return { error };
     } catch (error: any) {
       toast({
@@ -137,7 +135,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           data: metadata
         }
       });
-      
+
       if (error) {
         toast({
           variant: "destructive",
@@ -150,7 +148,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: "We've sent you a one-time password (OTP). Please enter it to verify your account.",
         });
       }
-      
+
       return { error };
     } catch (error: any) {
       toast({
@@ -169,7 +167,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         token,
         type: 'email'
       });
-      
+
       if (error) {
         toast({
           variant: "destructive",
@@ -177,7 +175,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: error.message,
         });
       }
-      
+
       return { error };
     } catch (error: any) {
       toast({
@@ -189,33 +187,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Google sign in failed",
-          description: error.message,
-        });
-      }
-      
-      return { error };
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Google sign in failed",
-        description: error.message,
-      });
-      return { error };
-    }
-  };
+
 
   const signOut = async () => {
     try {
@@ -276,7 +248,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signInWithPassword,
     signInWithOTP,
     verifyOTP,
-    signInWithGoogle,
     signOut,
     verifyOtp,
   };
