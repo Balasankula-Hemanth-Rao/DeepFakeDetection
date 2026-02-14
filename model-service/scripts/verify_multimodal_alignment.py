@@ -27,6 +27,7 @@ import subprocess
 import numpy as np
 import torch
 import torchaudio
+import cv2
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,35 @@ class MultimodalAlignmentVerifier:
         frame_count = len(frame_files)
         duration = frame_count * self.frame_duration
         return duration, frame_count
+
+    def get_video_duration_from_file(self, video_path: Path) -> Tuple[float, int]:
+        """
+        Calculate video duration from video file using OpenCV.
+        
+        Args:
+            video_path: Path to video file
+            
+        Returns:
+            Tuple of (duration_seconds, frame_count)
+        """
+        try:
+            cap = cv2.VideoCapture(str(video_path))
+            if not cap.isOpened():
+                return 0.0, 0
+            
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            
+            if fps > 0:
+                duration = frame_count / fps
+            else:
+                duration = 0.0
+                
+            cap.release()
+            return duration, frame_count
+        except Exception as e:
+            logger.error(f"Error reading video {video_path}: {e}")
+            return 0.0, 0
     
     def get_audio_duration(self, audio_path: Path) -> Tuple[float, int]:
         """
@@ -110,7 +140,14 @@ class MultimodalAlignmentVerifier:
         Returns:
             Alignment report dictionary
         """
-        video_duration, frame_count = self.get_video_duration_from_frames(frame_files)
+        
+        if isinstance(frame_files, list):
+             # Extracted frames mode
+            video_duration, frame_count = self.get_video_duration_from_frames(frame_files)
+        else:
+             # Direct video file mode
+            video_duration, frame_count = self.get_video_duration_from_file(frame_files)
+            
         audio_duration, audio_samples = self.get_audio_duration(audio_path)
         
         time_diff = abs(video_duration - audio_duration)
@@ -176,11 +213,27 @@ class MultimodalAlignmentVerifier:
             }
         }
         
-        # Group frames by video
+        # Group frames by video OR list video files
         video_frames = defaultdict(list)
-        for frame_file in sorted(frame_dir.glob('*.jpg')):
-            video_id = frame_file.stem.rsplit('_frame', 1)[0]
-            video_frames[video_id].append(frame_file)
+        
+        # Check if we have extracted frames or video files
+        has_frames = len(list(frame_dir.glob('*.jpg'))) > 0
+        has_videos = len(list(frame_dir.glob('*.mp4'))) > 0
+        
+        if has_frames:
+            logger.info("Detected extracted frames (.jpg)")
+            for frame_file in sorted(frame_dir.glob('*.jpg')):
+                video_id = frame_file.stem.rsplit('_frame', 1)[0]
+                video_frames[video_id].append(frame_file)
+        elif has_videos:
+            logger.info("Detected video files (.mp4)")
+            for video_file in sorted(frame_dir.glob('*.mp4')):
+                video_id = video_file.stem
+                # Store the video path itself instead of a list of frames
+                video_frames[video_id] = video_file
+        else:
+            logger.warning(f"No .jpg frames or .mp4 videos found in {frame_dir}")
+            return report
         
         video_ids = list(video_frames.keys())
         if max_videos:
@@ -196,10 +249,12 @@ class MultimodalAlignmentVerifier:
             
             # Check for missing files
             if not audio_file.exists():
+                # Count frames or just put 0 if it's a video file
+                f_count = len(frame_files) if isinstance(frame_files, list) else 0
                 report['videos'].append({
                     'video_id': video_id,
                     'status': 'MISSING_AUDIO',
-                    'frame_count': len(frame_files)
+                    'frame_count': f_count
                 })
                 report['summary']['missing_audio'] += 1
                 continue

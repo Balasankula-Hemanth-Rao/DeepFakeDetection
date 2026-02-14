@@ -35,14 +35,14 @@ import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ReduceLROnPlateau
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.config import get_config
 from src.logging_config import setup_logging, get_logger
-from src.data.multimodal_dataset import MultimodalDataset
+from src.datasets.multimodal_dataset import MultimodalDeepfakeDataset
 from src.models.multimodal_model import MultimodalModel
 from src.eval.multimodal_eval import evaluate_model
 from src.utils.metrics import compute_metrics, save_metrics_json
@@ -245,30 +245,65 @@ class Trainer:
     
     def _build_dataloaders(self) -> tuple:
         """Build train and val dataloaders."""
+        
         # Train dataset
-        train_dataset = MultimodalDataset(
-            data_root=self.data_root,
-            split='train',
-            config=self.config,
-            manifest=self.manifest,
+        train_frame_dir = self.data_root / 'train'
+        train_audio_dir = self.data_root / 'audio' / 'train'
+        if not train_audio_dir.exists():
+            train_audio_dir = None
+            
+        train_dataset = MultimodalDeepfakeDataset(
+            frame_dir=train_frame_dir,
+            audio_dir=train_audio_dir,
+            audio_feature='spectrogram',
+            frames_per_video=6,  # Reduced for 4GB GPU
+            sample_rate=getattr(self.config.audio, 'sample_rate', 16000),
+            n_mels=getattr(self.config.audio, 'n_mels', 64),
             debug=self.debug,
         )
+        
+        # Calculate weights for balancing
+        if not self.debug:
+            logger.info("Calculating class weights for WeightedRandomSampler...")
+            targets = [s['label'] for s in train_dataset.samples]
+            class_counts = np.bincount(targets)
+            class_weights = 1. / class_counts
+            sample_weights = [class_weights[t] for t in targets]
+            
+            sampler = WeightedRandomSampler(
+                weights=sample_weights,
+                num_samples=len(sample_weights),
+                replacement=True
+            )
+            shuffle = False
+            logger.info(f"Class counts: {class_counts}")
+            logger.info(f"Class weights: {class_weights}")
+        else:
+            sampler = None
+            shuffle = True
         
         train_loader = DataLoader(
             train_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=shuffle,
+            sampler=sampler,
             num_workers=self.num_workers,
             pin_memory=torch.cuda.is_available(),
-            collate_fn=train_dataset.collate_fn,
         )
         
         # Val dataset
-        val_dataset = MultimodalDataset(
-            data_root=self.data_root,
-            split='val',
-            config=self.config,
-            manifest=self.manifest,
+        val_frame_dir = self.data_root / 'val'
+        val_audio_dir = self.data_root / 'audio' / 'val'
+        if not val_audio_dir.exists():
+            val_audio_dir = None
+            
+        val_dataset = MultimodalDeepfakeDataset(
+            frame_dir=val_frame_dir,
+            audio_dir=val_audio_dir,
+            audio_feature='spectrogram',
+            frames_per_video=6,  # Reduced for 4GB GPU
+            sample_rate=getattr(self.config.audio, 'sample_rate', 16000),
+            n_mels=getattr(self.config.audio, 'n_mels', 64),
             debug=self.debug,
         )
         
@@ -278,7 +313,6 @@ class Trainer:
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=torch.cuda.is_available(),
-            collate_fn=val_dataset.collate_fn,
         )
         
         logger.info(f"Train dataset: {len(train_dataset)} samples")
@@ -297,7 +331,7 @@ class Trainer:
         num_batches = len(self.train_loader)
         
         for step, batch in enumerate(self.train_loader):
-            video = batch['video'].to(self.device)
+            video = batch['frames'].to(self.device)
             audio = batch['audio'].to(self.device)
             labels = batch['label'].to(self.device)
             
@@ -358,7 +392,7 @@ class Trainer:
         
         with torch.no_grad():
             for batch in self.val_loader:
-                video = batch['video'].to(self.device)
+                video = batch['frames'].to(self.device)
                 audio = batch['audio'].to(self.device)
                 labels = batch['label'].to(self.device)
                 
@@ -474,12 +508,11 @@ def main():
     setup_logging()
     
     # Load config
+    # Load config
     if args.config:
-        # Note: This would require extending get_config() to accept custom paths
-        # For now, use default config
-        logger.warning("Custom config path not yet supported. Using default config.")
+        logger.info(f"Loading custom config from {args.config}")
     
-    config = get_config()
+    config = get_config(args.config)
     
     # Override with debug mode
     if args.debug:

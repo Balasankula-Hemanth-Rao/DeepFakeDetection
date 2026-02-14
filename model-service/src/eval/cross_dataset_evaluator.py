@@ -37,7 +37,7 @@ from tqdm import tqdm
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from models.multimodal_model import MultimodalDeepfakeDetector
+from models.multimodal_model import MultimodalModel
 
 
 class CrossDatasetDataset(Dataset):
@@ -157,14 +157,65 @@ class CrossDatasetDataset(Dataset):
         }
     
     def _load_frames(self, video_path: Path) -> torch.Tensor:
-        """Load video frames (placeholder implementation)."""
-        frames = []
-        for _ in range(self.frames_per_video):
-            frame = Image.new('RGB', (224, 224), color='black')
-            if self.transform:
-                frame = self.transform(frame)
-            frames.append(frame)
-        return torch.stack(frames)
+        """
+        Load video frames (implemented using OpenCV).
+        Samples frames uniformly from the video.
+        """
+        try:
+            import cv2
+            cap = cv2.VideoCapture(str(video_path))
+            
+            if not cap.isOpened():
+                raise IOError(f"Could not open video {video_path}")
+                
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            
+            if frame_count <= 0:
+                 # Fallback for some headers
+                 # Just force read all? Too slow. 
+                 # Assume 30fps * 10 seconds = 300 frames as fallback
+                 frame_count = 300
+            
+            # Sample indices uniformly
+            indices = np.linspace(0, frame_count - 1, self.frames_per_video, dtype=int)
+            
+            frames = []
+            
+            for index in indices:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+                ret, frame = cap.read()
+                
+                if ret:
+                    # BGR to RGB
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    img = Image.fromarray(frame)
+                else:
+                    # Failed to read, use black frame
+                    img = Image.new('RGB', (224, 224), color='black')
+                
+                if self.transform:
+                    img_tensor = self.transform(img)
+                else:
+                    img_tensor = transforms.ToTensor()(img)
+                    
+                frames.append(img_tensor)
+            
+            cap.release()
+            
+            # Ensure we have enough frames
+            while len(frames) < self.frames_per_video:
+                 frames.append(torch.zeros_like(frames[0]))
+                 
+            return torch.stack(frames)
+            
+        except Exception as e:
+            print(f"Error loading frames from {video_path}: {e}")
+            # Fallback: return black frames
+            frames = []
+            for _ in range(self.frames_per_video):
+                frame = torch.zeros(3, 224, 224)
+                frames.append(frame)
+            return torch.stack(frames)
     
     def _load_audio(self, audio_path: Path) -> torch.Tensor:
         """Load and process audio."""
@@ -426,7 +477,7 @@ Examples:
     
     # Load model
     print("Loading model...")
-    model = MultimodalDeepfakeDetector(
+    model = MultimodalModel(
         enable_video=True,
         enable_audio=True
     )

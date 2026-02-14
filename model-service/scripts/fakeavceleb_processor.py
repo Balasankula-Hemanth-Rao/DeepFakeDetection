@@ -57,56 +57,57 @@ class FakeAVCelebProcessor:
     
     def organize_dataset(self):
         """
-        Organize FakeAVCeleb into real/fake directories.
+        Organize FakeAVCeleb into real/fake directories based on filenames.
         
-        FakeAVCeleb structure:
-        - RealVideo-RealAudio/ (real)
-        - FakeVideo-RealAudio/ (fake - video manipulation)
-        - RealVideo-FakeAudio/ (fake - audio manipulation)
-        - FakeVideo-FakeAudio/ (fake - both manipulated)
+        Structure found: {Ethnicity}/{Gender}/{ID}/{video_file}
+        
+        Classification:
+        - Fake: filename contains 'wavtolip', 'faceswap', 'fs', 'deepfake'
+        - Real: otherwise
         """
-        logger.info("Organizing FakeAVCeleb dataset...")
-        
-        # Define category mappings
-        categories = {
-            'real': ['RealVideo-RealAudio'],
-            'fake': ['FakeVideo-RealAudio', 'RealVideo-FakeAudio', 'FakeVideo-FakeAudio']
-        }
+        logger.info("Organizing FakeAVCeleb dataset (filename-based)...")
         
         stats = {'real': 0, 'fake': 0}
         
-        for label, category_names in categories.items():
-            label_dir = self.output_dir / label
-            label_dir.mkdir(parents=True, exist_ok=True)
-            
-            for category in category_names:
-                category_path = self.temp_dir / "FakeAVCeleb_v1.2" / category
-                
-                if not category_path.exists():
-                    # Try alternative paths
-                    category_path = self.temp_dir / category
-                
-                if category_path.exists():
-                    video_files = list(category_path.glob("*.mp4")) + list(category_path.glob("*.avi"))
-                    
-                    logger.info(f"  Processing {category}: {len(video_files)} videos")
-                    
-                    for video_file in video_files:
-                        # Create unique filename with category prefix
-                        new_name = f"{category}_{video_file.name}"
-                        dest_path = label_dir / new_name
-                        
-                        # Copy or symlink
-                        if not dest_path.exists():
-                            try:
-                                dest_path.symlink_to(video_file)
-                            except (OSError, NotImplementedError):
-                                shutil.copy2(video_file, dest_path)
-                        
-                        stats[label] += 1
-                else:
-                    logger.warning(f"  Category not found: {category}")
+        # Create output directories
+        (self.output_dir / 'real').mkdir(parents=True, exist_ok=True)
+        (self.output_dir / 'fake').mkdir(parents=True, exist_ok=True)
         
+        # Fake keywords
+        fake_keywords = {'wavtolip', 'faceswap', 'fs', 'fake', 'deepfake'}
+        
+        # Walk through all directories
+        logger.info(f"Scanning {self.temp_dir}...")
+        video_files = list(self.temp_dir.rglob("*.mp4")) + list(self.temp_dir.rglob("*.avi"))
+        
+        logger.info(f"Found {len(video_files)} videos total. Categorizing...")
+        
+        for video_file in video_files:
+            # Determine label
+            is_fake = any(keyword in video_file.name.lower() for keyword in fake_keywords)
+            label = 'fake' if is_fake else 'real'
+            
+            # Create unique filename: {parent_folders}_{filename}
+            # e.g. African_men_id00076_video.mp4
+            rel_path = video_file.relative_to(self.temp_dir)
+            # Skip the top-level folder if it's just the dataset name
+            parts = rel_path.parts
+            if parts[0].lower().startswith('fakeavceleb'):
+                parts = parts[1:]
+            
+            new_name = "_".join(parts)
+            dest_path = self.output_dir / label / new_name
+            
+            # Copy file
+            if not dest_path.exists():
+                try:
+                    shutil.copy2(video_file, dest_path)
+                    stats[label] += 1
+                except Exception as e:
+                    logger.warning(f"Failed to copy {video_file}: {e}")
+            else:
+                 stats[label] += 1
+
         logger.info(f"\n✓ Dataset organized:")
         logger.info(f"  - Real videos: {stats['real']}")
         logger.info(f"  - Fake videos: {stats['fake']}")

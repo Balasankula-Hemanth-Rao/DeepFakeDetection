@@ -65,6 +65,7 @@ class MultimodalDeepfakeDataset(Dataset):
         transform: Optional[transforms.Compose] = None,
         audio_duration: float = 3.0,
         sample_rate: int = 16000,
+        n_mels: int = 80,
         augment_audio: bool = False,
         debug: bool = False
     ):
@@ -79,6 +80,7 @@ class MultimodalDeepfakeDataset(Dataset):
             transform: Image transforms to apply
             audio_duration: Duration of audio to process (seconds)
             sample_rate: Audio sample rate (Hz)
+            n_mels: Number of mel bins (default: 80)
             augment_audio: Apply audio augmentation
             debug: Enable debug logging
         """
@@ -87,6 +89,8 @@ class MultimodalDeepfakeDataset(Dataset):
         self.audio_feature = audio_feature
         self.frames_per_video = frames_per_video
         self.audio_duration = audio_duration
+        self.sample_rate = sample_rate
+        self.n_mels = n_mels
         self.augment_audio = augment_audio
         self.debug = debug
         
@@ -94,10 +98,21 @@ class MultimodalDeepfakeDataset(Dataset):
         if self.audio_dir:
             self.audio_processor = AudioProcessor(
                 sample_rate=sample_rate,
-                audio_duration=audio_duration
+                audio_duration=audio_duration,
+                n_mels=n_mels
             )
+            
+            # Calculate expected spectrogram shape
+            # n_fft=512, hop_length=160 (defaults in AudioProcessor)
+            hop_length = 160
+            n_samples = int(sample_rate * audio_duration)
+            n_time_steps = n_samples // hop_length + 1
+            
+            self.dummy_audio_shape = (n_mels, n_time_steps)
+            self.dummy_audio = torch.zeros(self.dummy_audio_shape)
         else:
             self.audio_processor = None
+            self.dummy_audio = None
         
         # Default image transforms
         if transform is None:
@@ -255,6 +270,10 @@ class MultimodalDeepfakeDataset(Dataset):
         audio = None
         if 'audio_path' in sample and self.audio_dir:
             audio = self._load_audio(sample['audio_path'])
+        
+        if audio is None and self.audio_dir:
+            # Use dummy audio if missing or failed to load
+            audio = self.dummy_audio.clone() if self.dummy_audio is not None else torch.zeros(1)
         
         # Prepare output
         output = {

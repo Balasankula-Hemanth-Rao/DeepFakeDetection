@@ -27,10 +27,16 @@ import argparse
 import json
 import logging
 import subprocess
+import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 from tqdm import tqdm
 import numpy as np
+
+# Add FFmpeg to PATH
+ffmpeg_path = r"C:\Users\SAI-RAM\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin"
+if ffmpeg_path not in os.environ["PATH"]:
+    os.environ["PATH"] += os.pathsep + ffmpeg_path
 
 # Configure logging
 logging.basicConfig(

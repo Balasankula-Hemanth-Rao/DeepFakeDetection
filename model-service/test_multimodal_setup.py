@@ -27,40 +27,40 @@ def test_imports():
     
     try:
         import torch
-        logger.info("✓ PyTorch")
+        logger.info("[OK] PyTorch")
     except ImportError as e:
-        logger.error(f"✗ PyTorch: {e}")
+        logger.error(f"[FAIL] PyTorch: {e}")
         return False
     
     try:
         import torchaudio
-        logger.info("✓ torchaudio")
+        logger.info("[OK] torchaudio")
     except ImportError as e:
-        logger.error(f"✗ torchaudio: {e}")
+        logger.error(f"[FAIL] torchaudio: {e}")
         return False
     
     try:
         import librosa
-        logger.info("✓ librosa")
+        logger.info("[OK] librosa")
     except ImportError as e:
-        logger.error(f"✗ librosa: {e}")
+        logger.error(f"[FAIL] librosa: {e}")
         return False
     
     try:
         from PIL import Image
-        logger.info("✓ Pillow")
+        logger.info("[OK] Pillow")
     except ImportError as e:
-        logger.error(f"✗ Pillow: {e}")
+        logger.error(f"[FAIL] Pillow: {e}")
         return False
     
     try:
         import torchvision
-        logger.info("✓ torchvision")
+        logger.info("[OK] torchvision")
     except ImportError as e:
-        logger.error(f"✗ torchvision: {e}")
+        logger.error(f"[FAIL] torchvision: {e}")
         return False
     
-    logger.info("✓ All imports successful\n")
+    logger.info("[OK] All imports successful\n")
     return True
 
 
@@ -72,15 +72,15 @@ def test_audio_processor():
         from src.preprocessing.audio_processor import AudioProcessor
         
         processor = AudioProcessor(sample_rate=16000, n_mels=80)
-        logger.info(f"✓ AudioProcessor initialized")
+        logger.info(f"[OK] AudioProcessor initialized")
         logger.info(f"  - Sample rate: 16000 Hz")
         logger.info(f"  - Mel bins: 80")
         logger.info(f"  - MFCC coefficients: 13")
-        logger.info("✓ AudioProcessor tests passed\n")
+        logger.info("[OK] AudioProcessor tests passed\n")
         return True
         
     except Exception as e:
-        logger.error(f"✗ AudioProcessor test failed: {e}\n")
+        logger.error(f"[FAIL] AudioProcessor test failed: {e}\n")
         return False
 
 
@@ -97,31 +97,31 @@ def test_multimodal_dataset():
         # Check if test data exists
         frame_dir = Path('data/processed/train/fake')
         if not frame_dir.exists() or not list(frame_dir.glob('*.jpg')):
-            logger.warning(f"⚠ Test data not found at {frame_dir}")
+            logger.warning(f"[WARN] Test data not found at {frame_dir}")
             logger.warning("  To test with real data, run audio extraction first")
-            logger.info("✓ MultimodalDeepfakeDataset module loaded successfully\n")
+            logger.info("[OK] MultimodalDeepfakeDataset module loaded successfully\n")
             return True
         
         # Try to load dataset
         dataset = MultimodalDeepfakeDataset(
-            frame_dir='data/processed/train/fake',
+            frame_dir='data/processed/train',
             frames_per_video=5
         )
         
-        logger.info(f"✓ Dataset loaded")
+        logger.info(f"[OK] Dataset loaded")
         logger.info(f"  - Samples: {len(dataset)}")
         
         # Try to get a sample
         sample = dataset[0]
-        logger.info(f"✓ Sample loaded")
+        logger.info(f"[OK] Sample loaded")
         logger.info(f"  - Frames shape: {sample['frames'].shape}")
         logger.info(f"  - Label: {sample['label'].item()}")
         
-        logger.info("✓ MultimodalDeepfakeDataset tests passed\n")
+        logger.info("[OK] MultimodalDeepfakeDataset tests passed\n")
         return True
         
     except Exception as e:
-        logger.error(f"✗ MultimodalDeepfakeDataset test failed: {e}\n")
+        logger.error(f"[FAIL] MultimodalDeepfakeDataset test failed: {e}\n")
         return False
 
 
@@ -139,11 +139,11 @@ def test_directory_structure():
     all_exist = True
     for dir_path in required_dirs:
         if dir_path.exists():
-            logger.info(f"✓ {dir_path}")
+            logger.info(f"[OK] {dir_path}")
         else:
-            logger.warning(f"⚠ {dir_path} (not critical)")
+            logger.warning(f"[WARN] {dir_path} (not critical)")
     
-    logger.info("✓ Directory structure tests passed\n")
+    logger.info("[OK] Directory structure tests passed\n")
     return True
 
 
@@ -159,15 +159,15 @@ def test_scripts_exist():
     all_exist = True
     for script in required_scripts:
         if script.exists():
-            logger.info(f"✓ {script}")
+            logger.info(f"[OK] {script}")
         else:
-            logger.error(f"✗ {script} not found")
+            logger.error(f"[FAIL] {script} not found")
             all_exist = False
     
     if all_exist:
-        logger.info("✓ All script files present\n")
+        logger.info("[OK] All script files present\n")
     else:
-        logger.error("✗ Some scripts missing\n")
+        logger.error("[FAIL] Some scripts missing\n")
     
     return all_exist
 
@@ -180,22 +180,22 @@ def test_torch_cuda():
         import torch
         
         if torch.cuda.is_available():
-            logger.info(f"✓ CUDA available")
+            logger.info(f"[OK] CUDA available")
             logger.info(f"  - Device: {torch.cuda.get_device_name(0)}")
             logger.info(f"  - Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
         else:
-            logger.warning("⚠ CUDA not available (CPU will be used)")
+            logger.warning("[WARN] CUDA not available (CPU will be used)")
         
         # Test tensor creation
         x = torch.randn(2, 3, 224, 224)
-        logger.info(f"✓ Tensor creation works")
+        logger.info(f"[OK] Tensor creation works")
         logger.info(f"  - Shape: {x.shape}")
         
-        logger.info("✓ PyTorch GPU tests passed\n")
+        logger.info("[OK] PyTorch GPU tests passed\n")
         return True
         
     except Exception as e:
-        logger.error(f"✗ PyTorch GPU test failed: {e}\n")
+        logger.error(f"[FAIL] PyTorch GPU test failed: {e}\n")
         return False
 
 
@@ -218,7 +218,7 @@ def print_summary(results):
     total = len(tests)
     
     for test_name, result in tests:
-        status = "✓ PASS" if result else "✗ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         print(f"{test_name:.<40} {status}")
     
     print("="*60)
@@ -228,7 +228,7 @@ def print_summary(results):
         print("🎉 All tests passed! Ready for multimodal training.\n")
         return True
     else:
-        print(f"⚠️  {total - passed} tests failed. See above for details.\n")
+        print(f"[WARN]️  {total - passed} tests failed. See above for details.\n")
         return False
 
 

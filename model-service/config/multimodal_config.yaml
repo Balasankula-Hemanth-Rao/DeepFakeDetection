@@ -1,0 +1,41 @@
+model:
+  checkpoint_path: checkpoints/multimodal_best.pth
+  image_size: 224
+  model_type: efficientnet_b0
+  enable_video: true
+  enable_audio: true
+  video:
+    backbone: efficientnet_b0
+    pretrained: true
+    embed_dim: 1280
+    temporal_strategy: avg_pool
+  fusion:
+    strategy: concat
+    hidden_dim: 512
+    dropout: 0.3
+    temporal_consistency_loss:
+      enabled: false
+
+audio:
+  encoder_type: simple
+  sample_rate: 16000
+  n_mels: 64
+  embed_dim: 256
+
+training:
+  seed: 42
+  learning_rate: 0.0001
+  batch_size: 2
+  epochs: 30
+  optimizer: adamw
+  scheduler: cosine
+  early_stopping_patience: 5
+  checkpoint_interval: 1
+
+inference:
+  device: auto
+  max_concurrent: 4
+
+logging:
+  level: INFO
+  json: true

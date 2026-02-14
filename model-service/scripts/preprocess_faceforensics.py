@@ -87,20 +87,27 @@ def extract_frames_from_video(
 
 
 
-def find_videos(data_dir: Path) -> Tuple[List[Path], List[Path]]:
+def find_videos(data_dir: Path, compression: str = 'c23', dataset_type: str = 'actors') -> Tuple[List[Path], List[Path]]:
     """
     Find all fake and real videos in the FaceForensics dataset.
     
     Args:
         data_dir: Root data directory containing FaceForensics dataset
+        compression: Compression level ('c23', 'c40', 'raw')
+        dataset_type: Dataset type ('youtube' for FF++, 'actors' for DeepFakeDetection)
         
     Returns:
         Tuple of (fake_videos, real_videos) as lists of Paths
     """
-    logger.info("Scanning for videos...")
+    logger.info(f"Scanning for videos (compression={compression}, type={dataset_type})...")
     
     # Find fake videos (Deepfakes)
-    fake_dir = data_dir / 'manipulated_sequences' / 'Deepfakes' / 'c40' / 'videos'
+    # Note: DeepFakeDetection fakes are in manipulated_sequences/DeepFakeDetection
+    if dataset_type == 'actors':
+        fake_dir = data_dir / 'manipulated_sequences' / 'DeepFakeDetection' / compression / 'videos'
+    else:
+        fake_dir = data_dir / 'manipulated_sequences' / 'Deepfakes' / compression / 'videos'
+        
     fake_videos = []
     if fake_dir.exists():
         fake_videos = sorted(list(fake_dir.glob('*.mp4')))
@@ -109,7 +116,11 @@ def find_videos(data_dir: Path) -> Tuple[List[Path], List[Path]]:
         logger.warning(f"Fake videos directory not found: {fake_dir}")
     
     # Find real videos (original)
-    real_dir = data_dir / 'original_sequences' / 'youtube' / 'c40' / 'videos'
+    if dataset_type == 'actors':
+         real_dir = data_dir / 'original_sequences' / 'actors' / compression / 'videos'
+    else:
+         real_dir = data_dir / 'original_sequences' / 'youtube' / compression / 'videos'
+         
     real_videos = []
     if real_dir.exists():
         real_videos = sorted(list(real_dir.glob('*.mp4')))
@@ -263,7 +274,8 @@ def process_all_videos(
     splits: Dict[str, Dict[str, List[Path]]],
     output_dir: Path,
     fps: float = 3.0,
-    max_videos: int = None
+    max_videos: int = None,
+    start_index: int = 0
 ) -> List[Dict]:
     """
     Process all videos in all splits.
@@ -273,12 +285,13 @@ def process_all_videos(
         output_dir: Output directory for processed frames
         fps: Frames per second to extract
         max_videos: Maximum videos to process (for debugging)
+        start_index: Starting index for video naming
         
     Returns:
         List of processing metadata dictionaries
     """
     metadata = []
-    video_idx = 0
+    video_idx = start_index
     total_videos = sum(
         len(split_data['fake']) + len(split_data['real'])
         for split_data in splits.values()
@@ -407,6 +420,30 @@ Examples:
         help='Enable debug mode (verbose logging)'
     )
     
+    parser.add_argument(
+        '--compression',
+        type=str,
+        default='c23',
+        choices=['c23', 'c40', 'raw'],
+        help='Compression level (default: c23)'
+    )
+
+    parser.add_argument(
+        '--dataset-type',
+        type=str,
+        default='actors',
+        choices=['youtube', 'actors'],
+        help='Dataset type: youtube (FF++) or actors (DeepFakeDetection)'
+    )
+    
+
+    parser.add_argument(
+        '--start-index',
+        type=int,
+        default=0,
+        help='Starting index for video naming (to avoid collisions)'
+    )
+    
     args = parser.parse_args()
     
     if args.debug:
@@ -422,7 +459,11 @@ Examples:
         logger.info("=" * 70)
         
         # Find videos
-        fake_videos, real_videos = find_videos(input_dir)
+        fake_videos, real_videos = find_videos(
+            input_dir, 
+            compression=args.compression,
+            dataset_type=args.dataset_type
+        )
         
         if not fake_videos and not real_videos:
             logger.error("No videos found! Check input directory structure.")
@@ -440,7 +481,8 @@ Examples:
             splits=splits,
             output_dir=output_dir,
             fps=args.fps,
-            max_videos=args.max_videos
+            max_videos=args.max_videos,
+            start_index=args.start_index
         )
         
         # Save metadata

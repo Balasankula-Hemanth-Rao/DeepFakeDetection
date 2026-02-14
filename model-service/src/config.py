@@ -37,6 +37,45 @@ if _env_path.exists():
     load_dotenv(_env_path)
 
 
+class VideoConfig(BaseModel):
+    """Video modality configuration."""
+    backbone: str = Field(default="efficientnet_b3", description="Video backbone model")
+    pretrained: bool = Field(default=True, description="Use pretrained weights")
+    embed_dim: int = Field(default=1536, description="Video embedding dimension")
+    temporal_strategy: str = Field(default="avg_pool", description="Temporal aggregation strategy")
+
+
+class AudioConfig(BaseModel):
+    """Audio modality configuration."""
+    encoder_type: str = Field(default="simple", description="Audio encoder type (simple/wav2vec2)")
+    sample_rate: int = Field(default=16000, description="Audio sample rate")
+    n_mels: int = Field(default=64, description="Number of mel bins")
+    embed_dim: int = Field(default=256, description="Audio embedding dimension")
+
+
+class FusionConfig(BaseModel):
+    """Multimodal fusion configuration."""
+    strategy: str = Field(default="concat", description="Fusion strategy (concat/attention/gated)")
+    hidden_dim: int = Field(default=512, description="Fusion hidden dimension")
+    dropout: float = Field(default=0.3, description="Dropout rate")
+    modality_dropout_prob: float = Field(default=0.0, description="Probability of dropping a modality during training")
+    temporal_consistency_loss: dict = Field(default_factory=dict, description="Temporal consistency loss config")
+
+
+class TrainingConfig(BaseModel):
+    """Training configuration."""
+    seed: int = Field(default=42, description="Random seed")
+    learning_rate: float = Field(default=1.0e-4, description="Learning rate")
+    weight_decay: float = Field(default=1.0e-5, description="Weight decay")
+    optimizer: str = Field(default="adamw", description="Optimizer name")
+    scheduler: str = Field(default="cosine", description="Scheduler name")
+    epochs: int = Field(default=30, description="Number of epochs")
+    batch_size: int = Field(default=16, description="Batch size")
+    early_stopping_patience: int = Field(default=5, description="Early stopping patience")
+    checkpoint_interval: int = Field(default=1, description="Checkpoint save interval")
+    loss_function: str = Field(default="crossentropy", description="Loss function name")
+
+
 class ModelConfig(BaseModel):
     """Model configuration."""
 
@@ -54,6 +93,18 @@ class ModelConfig(BaseModel):
         default="efficientnet_b3",
         description="Model architecture type",
     )
+    
+    # Multimodal specific
+    enable_video: bool = Field(default=True, description="Enable video modality")
+    enable_video_config: VideoConfig = Field(default_factory=VideoConfig, alias="video")
+    
+    enable_audio: bool = Field(default=True, description="Enable audio modality")
+    # Audio config is at root level or here? 
+    # Based on MultimodalModel, audio config is separate, but fusion is inside model. 
+    # Let's keep structure consistent with usage or update usage. 
+    # MultimodalModel expects: video_cfg = model_cfg.get('video'), fusion_cfg = model_cfg.get('fusion').
+    
+    fusion: FusionConfig = Field(default_factory=FusionConfig)
 
     @field_validator("checkpoint_path", mode="before")
     @classmethod
@@ -67,6 +118,8 @@ class ModelConfig(BaseModel):
                 path = root / v
             return str(path)
         return v
+    
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ServerConfig(BaseModel):
@@ -156,6 +209,10 @@ class Config(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     inference: InferenceConfig = Field(default_factory=InferenceConfig)
+    
+    # New sections
+    audio: AudioConfig = Field(default_factory=AudioConfig)
+    training: TrainingConfig = Field(default_factory=TrainingConfig)
 
 
 # Global config instance (singleton)
@@ -163,8 +220,14 @@ _config: Optional[Config] = None
 _logger = logging.getLogger(__name__)
 
 
-def _find_config_file() -> Path:
-    """Find config.yaml file, searching common locations."""
+def _find_config_file(custom_path: Optional[str] = None) -> Path:
+    """Find config.yaml file, searching common locations or using custom path."""
+    if custom_path:
+        path = Path(custom_path)
+        if path.exists():
+            return path
+        _logger.warning(f"Custom config path {custom_path} not found, falling back to defaults")
+
     search_paths = [
         Path(__file__).parent.parent / "config" / "config.yaml",  # src/../config/config.yaml
         Path(__file__).parent.parent.parent / "config" / "config.yaml",  # root/config/config.yaml
@@ -179,9 +242,9 @@ def _find_config_file() -> Path:
     return Path(__file__).parent.parent / "config" / "config.yaml"
 
 
-def _load_yaml_config() -> dict:
+def _load_yaml_config(custom_path: Optional[str] = None) -> dict:
     """Load configuration from YAML file."""
-    config_path = _find_config_file()
+    config_path = _find_config_file(custom_path)
 
     if not config_path.exists():
         _logger.warning(f"Config file not found at {config_path}, using defaults")
@@ -238,6 +301,10 @@ def _merge_env_config(yaml_config: dict) -> dict:
         env_config.setdefault("inference", {})["device"] = os.getenv(
             "MODEL_INFERENCE_DEVICE"
         )
+        
+    # Audio config overrides
+    if os.getenv("MODEL_AUDIO_ENCODER_TYPE"):
+        env_config.setdefault("audio", {})["encoder_type"] = os.getenv("MODEL_AUDIO_ENCODER_TYPE")
 
     # Deep merge: env config overrides yaml config
     def deep_merge(base: dict, override: dict) -> dict:
@@ -253,7 +320,7 @@ def _merge_env_config(yaml_config: dict) -> dict:
     return deep_merge(yaml_config, env_config)
 
 
-def load_config() -> Config:
+def load_config(config_path: Optional[str] = None) -> Config:
     """
     Load and validate configuration.
 
@@ -263,7 +330,7 @@ def load_config() -> Config:
     Raises:
         ValueError: If configuration is invalid.
     """
-    yaml_config = _load_yaml_config()
+    yaml_config = _load_yaml_config(config_path)
     merged_config = _merge_env_config(yaml_config)
 
     try:
@@ -275,16 +342,19 @@ def load_config() -> Config:
         raise ValueError(f"Invalid configuration: {e}") from e
 
 
-def get_config() -> Config:
+def get_config(config_path: Optional[str] = None) -> Config:
     """
     Get the global configuration object (singleton).
+    
+    Args:
+        config_path: Optional path to config file (only used on first load or force reload)
 
     Returns:
         Config: Application configuration.
     """
     global _config
-    if _config is None:
-        _config = load_config()
+    if _config is None or config_path is not None:
+        _config = load_config(config_path)
     return _config
 
 

@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.config import get_config
 from src.logging_config import setup_logging, get_logger
-from src.data.multimodal_dataset import MultimodalDataset
+from src.datasets.multimodal_dataset import MultimodalDeepfakeDataset
 from src.models.multimodal_model import MultimodalModel
 from src.utils.metrics import (
     compute_auc,
