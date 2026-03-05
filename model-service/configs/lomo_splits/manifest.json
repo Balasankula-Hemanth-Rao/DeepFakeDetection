@@ -1,0 +1,18 @@
+{
+  "protocol": "LOMO \u2014 Leave-One-Method-Out",
+  "ffpp_root": "E:\\project\\aura-veracity-lab\\model-service\\data\\ffpp",
+  "compression": "c23",
+  "splits": [
+    "configs\\lomo_splits\\split_1_test_Deepfakes.json",
+    "configs\\lomo_splits\\split_2_test_Face2Face.json",
+    "configs\\lomo_splits\\split_3_test_FaceSwap.json",
+    "configs\\lomo_splits\\split_4_test_NeuralTextures.json"
+  ],
+  "train_ids": "0-719  (720 videos)",
+  "val_ids": "720-859 (140 videos)",
+  "test_ids": "860-999 (140 videos)",
+  "usage": {
+    "train_command": "python src/train_lomo.py --split-config configs/lomo_splits/split_N_test_METHOD.json --output checkpoints/lomo_N/ --epochs 10",
+    "eval_command": "python eval_pipeline.py --data-dir data/eval_ready/lomo/leave_out_METHOD --checkpoint checkpoints/lomo_N/best.pth --tag lomo_METHOD"
+  }
+}
