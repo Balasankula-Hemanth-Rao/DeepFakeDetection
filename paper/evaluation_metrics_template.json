@@ -1,0 +1,31 @@
+{
+  "runs": [
+    {
+      "name": "Standard (Run 1)",
+      "auc": 0.9267,
+      "accuracy": 0.8845,
+      "f1": 0.9267,
+      "tn": 99,
+      "fp": 51,
+      "fn": 23,
+      "tp": 468
+    },
+    {
+      "name": "Balanced Training (Run 2)",
+      "auc": 0.929,
+      "accuracy": 0.8861,
+      "f1": 0.9265,
+      "tn": 108,
+      "fp": 42,
+      "fn": 31,
+      "tp": 460
+    }
+  ],
+  "per_method_accuracy": {
+    "Face2Face": 0.9833,
+    "Deepfakes": 0.9748,
+    "FaceSwap": 0.9609,
+    "NeuralTextures": 0.8952,
+    "Original (Real)": 0.66
+  }
+}

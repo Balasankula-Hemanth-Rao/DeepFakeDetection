@@ -59,3 +59,55 @@ model-service/logs/
 # OS files
 Thumbs.db
 .DS_Store
+
+# ── Videos & large media ──────────────────────────────────────────────────────
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.webm
+*.flv
+
+# ── Heavy images (generated UML / arch diagrams) ─────────────────────────────
+uml_imgs/
+uml diagrams/
+deepfake_arch_clean_*.png
+
+# ── Office documents & presentations ─────────────────────────────────────────
+*.docx
+*.doc
+*.pptx
+*.ppt
+*.pdf
+*.xlsx
+*.xls
+
+# ── Paper / LaTeX build artifacts ────────────────────────────────────────────
+paper/figures/
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.aux
+paper/*.synctex.gz
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.log
+
+# ── Dataset directories (heavy raw data) ─────────────────────────────────────
+FakeAVCeleb-download/
+model-service/sample_data/
+model-service/portable_package/
+model-service/results/
+
+# ── Archive/lomo experiment folders ──────────────────────────────────────────
+archive_lomo/
+aura_lomo_package/
+
+# ── Sensitive config ──────────────────────────────────────────────────────────
+.env
+*.env
+!.env.example
+
+# ── Supabase local ────────────────────────────────────────────────────────────
+supabase/.branches/
+supabase/.temp/

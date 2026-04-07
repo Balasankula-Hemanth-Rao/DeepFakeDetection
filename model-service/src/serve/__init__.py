@@ -8,8 +8,18 @@ This package contains serving and inference components:
 - Ensemble model serving
 """
 
-from .inference import VideoInferenceEngine
-from .ensemble import EnsembleModel, EnsembleInferenceEngine
+# Lazy imports - only load when needed to avoid torch dependency in simulation mode
+def __getattr__(name):
+    if name == 'VideoInferenceEngine':
+        from .inference import VideoInferenceEngine
+        return VideoInferenceEngine
+    elif name == 'EnsembleModel':
+        from .ensemble import EnsembleModel
+        return EnsembleModel
+    elif name == 'EnsembleInferenceEngine':
+        from .ensemble import EnsembleInferenceEngine
+        return EnsembleInferenceEngine
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
     'VideoInferenceEngine',
