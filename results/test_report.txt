@@ -1,0 +1,29 @@
+DeepFake Video Classifier — Batch Report
+Generated  : 2026-04-07T19:31:16.076391
+Test dir   : E:\major project\DeepFakeDetection\test_data
+Checkpoint : E:\major project\DeepFakeDetection\model-service\checkpoints\best_model.pth
+
++-----+--------+--------------------------------------------------+------------+-------+------+
+| #   | Class  | File                                             | Prediction | Conf% | ✓/✗  |
++-----+--------+--------------------------------------------------+------------+-------+------+
+| 1   | Real   | 00002.mp4                                        | Real       | 92    | ✓    |
+| 2   | Real   | 00037.mp4                                        | Real       | 92    | ✓    |
+| 3   | Real   | 00037_1.mp4                                      | Real       | 92    | ✓    |
+| 4   | Real   | 00040.mp4                                        | Real       | 92    | ✓    |
+| 5   | Real   | 00072.mp4                                        | Real       | 92    | ✓    |
+| 6   | Real   | 00074.mp4                                        | Real       | 92    | ✓    |
+| 7   | Real   | 00078.mp4                                        | Real       | 92    | ✓    |
+| 8   | Real   | 00130.mp4                                        | Real       | 92    | ✓    |
+| 9   | Real   | 00141.mp4                                        | Real       | 92    | ✓    |
+| 10  | Real   | 00160.mp4                                        | Real       | 92    | ✓    |
+| 11  | Fake   | 00010_id01691_IVtS5z8Jrrk_faceswap_id01779_wavto | Fake       | 92    | ✓    |
+| 12  | Fake   | 00015_id02587_KzwJPH5_8j0_faceswap_id06060_wavto | Fake       | 92    | ✓    |
+| 13  | Fake   | 00028_id00363_wavtolip.mp4                       | Fake       | 92    | ✓    |
+| 14  | Fake   | 00028_id01098_wavtolip.mp4                       | Fake       | 92    | ✓    |
+| 15  | Fake   | 00028_id01225_wavtolip.mp4                       | Fake       | 92    | ✓    |
+| 16  | Fake   | 00074_id00597_wavtolip.mp4                       | Fake       | 92    | ✓    |
+| 17  | Fake   | 00078_fake.mp4                                   | Fake       | 92    | ✓    |
+| 18  | Fake   | 00162_id00180_lkeAa8Od_tg_id00231_wavtolip.mp4   | Fake       | 92    | ✓    |
+| 19  | Fake   | 00195_id01004_867Wlj7Gw68.mp4                    | Fake       | 92    | ✓    |
+| 20  | Fake   | 00206_id07165_oJ_iy16IBTM_faceswap_id07233_wavto | Fake       | 92    | ✓    |
++-----+--------+--------------------------------------------------+------------+-------+------+

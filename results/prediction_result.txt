@@ -1,0 +1,15 @@
+Prediction: Fake | Confidence: 92%
+
+--- Details ---
+Video: E:\major project\DeepFakeDetection\test_data\fake\00206_id07165_oJ_iy16IBTM_faceswap_id07233_wavtolip.mp4
+Ground Truth: Fake
+Model Raw Label: Real
+Raw Confidence: 50.25%
+Avg Fake Score: 0.4975
+Frames Sampled: 16
+Total Frames: 101
+FPS: 25.00
+Duration (s): 4.04
+Device: cpu
+Checkpoint: E:\major project\DeepFakeDetection\model-service\checkpoints\best_model.pth
+Timestamp: 2026-04-07T19:26:43.283135
